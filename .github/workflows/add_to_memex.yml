@@ -2,6 +2,7 @@
 name: Move to Work Project
 
 on:
+  workflow_dispatch:
   push:
   schedule:
     # runs every 1 hour
