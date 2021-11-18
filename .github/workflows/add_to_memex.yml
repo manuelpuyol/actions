@@ -1,0 +1,51 @@
+# Copied from https://github.com/jonrohan/add-to-memex/blob/main/.github/workflows/add-to-inbox.yml
+name: Move to Work Project
+
+on:
+  push:
+  schedule:
+    # runs every 1 hour
+    - cron:  '0 * * * *'
+
+jobs:
+  my-pull-requests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Find my pull requests
+        id: pull-requests
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{ secrets.PAT }}
+          script: |
+            const query = `{
+              viewer {
+                login
+                pullRequests(first: 100, states: OPEN) {
+                  edges {
+                    node {
+                      id
+                    }
+                  }
+                }
+              }
+            }`
+            const result = await github.graphql(query)
+            return result.viewer.pullRequests.edges.map(p => p.node.id )
+      - name: Add to project
+        uses: actions/github-script@v5
+        env:
+          PROJECT_ID: ${{ secrets.PROJECT_ID }}
+        with:
+          github-token: ${{ secrets.PAT }}
+          script: |
+            const prIds = ${{steps.pull-requests.outputs.result}};
+            for (const id of prIds) {
+              await github.graphql(`mutation($project:ID!,$issue:ID!) {
+                  addProjectNextItem(input: {projectId: $project, contentId: $issue}) {
+                    projectNextItem {
+                      id
+                    }
+                  }
+                }`, { project: process.env.PROJECT_ID, issue: id })
+            }
