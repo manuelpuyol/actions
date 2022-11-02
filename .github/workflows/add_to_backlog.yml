@@ -49,9 +49,7 @@ jobs:
             for (const id of prIds) {
               await github.graphql(`mutation($project:ID!,$issue:ID!) {
                   addProjectV2ItemById(input: {projectId: $project, contentId: $issue}) {
-                    item {
-                      id
-                    }
+                    clientMutationId
                   }
                 }`, { project: process.env.PROJECT_ID, issue: id })
             }
