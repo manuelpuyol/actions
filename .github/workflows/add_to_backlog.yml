@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Find my pull requests
         id: pull-requests
-        uses: actions/github-script@v5
+        uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.PAT }}
           script: |
@@ -39,7 +39,7 @@ jobs:
             const result = await github.graphql(query)
             return result.viewer.pullRequests.edges.filter(p => p.node.repository.owner.login == "github").map(p => p.node.id )
       - name: Add to project
-        uses: actions/github-script@v5
+        uses: actions/github-script@v6
         env:
           PROJECT_ID: ${{ secrets.PROJECT_ID }}
         with:
