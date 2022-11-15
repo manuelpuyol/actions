@@ -87,9 +87,16 @@ jobs:
           script: |
             const urls = ${{steps.pull-requests-non-gh.outputs.result}};
             for (const url of urls) {
-              await github.graphql(`mutation($project:ID!,$issue:String!) {
+              try {
+                await github.graphql(`mutation($project:ID!,$issue:String!) {
                   addProjectV2DraftIssue(input: {projectId: $project, title: $issue}) {
                     clientMutationId
                   }
                 }`, { project: process.env.PROJECT_ID, issue: url })
+              } catch (error) {
+                if (error.name !== 'GraphqlResponseError') throw error
+                if (error.message.includes('already exists in this project')) return
+
+                throw error
+              }
             }
