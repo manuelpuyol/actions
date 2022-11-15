@@ -37,7 +37,7 @@ jobs:
               }
             }`
             const result = await github.graphql(query)
-            return result.viewer.pullRequests.edges.filter(p => p.node.repository.owner.login == "github").map(p => p.node.id )
+            return result.viewer.pullRequests.edges.map(p => p.node.id )
       - name: Add to project
         uses: actions/github-script@v6
         env:
