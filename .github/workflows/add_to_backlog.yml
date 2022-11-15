@@ -54,7 +54,7 @@ jobs:
                 }`, { project: process.env.PROJECT_ID, issue: id })
             }
       - name: Find my non-GH pull requests
-        id: pull-requests
+        id: pull-requests-non-gh
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.PAT }}
@@ -85,7 +85,7 @@ jobs:
         with:
           github-token: ${{ secrets.PAT }}
           script: |
-            const prIds = ${{steps.pull-requests.outputs.result}};
+            const prIds = ${{steps.pull-requests-non-gh.outputs.result}};
             for (const id of prIds) {
               await github.graphql(`mutation($project:ID!,$issue:String!) {
                   addProjectV2DraftIssue(input: {projectId: $project, title: $issue}) {
