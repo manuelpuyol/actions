@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Find my pull requests
+      - name: Find my GH pull requests
         id: pull-requests
         uses: actions/github-script@v6
         with:
@@ -38,7 +38,7 @@ jobs:
             }`
             const result = await github.graphql(query)
             return result.viewer.pullRequests.edges.filter(p => p.node.repository.owner.login == "github").map(p => p.node.id )
-      - name: Add to project
+      - name: Add GH PRs to project
         uses: actions/github-script@v6
         env:
           PROJECT_ID: ${{ secrets.PROJECT_ID }}
@@ -52,4 +52,50 @@ jobs:
                     clientMutationId
                   }
                 }`, { project: process.env.PROJECT_ID, issue: id })
+            }
+      - name: Find my non-GH pull requests
+        id: pull-requests-non-gh
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.PAT }}
+          script: |
+            const query = `{
+              viewer {
+                login
+                pullRequests(first: 100, states: OPEN) {
+                  edges {
+                    node {
+                      url
+                      repository {
+                        owner {
+                          login
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }`
+            const result = await github.graphql(query)
+            return result.viewer.pullRequests.edges.filter(p => p.node.repository.owner.login != "github").map(p => p.node.url )
+      - name: Add non-GH PRs to project
+        uses: actions/github-script@v6
+        env:
+          PROJECT_ID: ${{ secrets.PROJECT_ID }}
+        with:
+          github-token: ${{ secrets.PAT }}
+          script: |
+            const urls = ${{steps.pull-requests-non-gh.outputs.result}};
+            for (const url of urls) {
+              try {
+                await github.graphql(`mutation($project:ID!,$issue:String!) {
+                  addProjectV2DraftIssue(input: {projectId: $project, title: $issue}) {
+                    clientMutationId
+                  }
+                }`, { project: process.env.PROJECT_ID, issue: url })
+              } catch (error) {
+                if (error.name !== 'GraphqlResponseError' || !error.message.includes('already exists in this project')) {
+                  throw error
+                }
+              }
             }
