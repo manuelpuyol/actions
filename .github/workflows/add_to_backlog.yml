@@ -94,10 +94,8 @@ jobs:
                   }
                 }`, { project: process.env.PROJECT_ID, issue: url })
               } catch (error) {
-                console.log(error, error.message)
-                if (error.name !== 'GraphqlResponseError') throw error
-                if (error.message.includes('already exists in this project')) return
-
-                throw error
+                if (error.name !== 'GraphqlResponseError' || !error.message.includes('already exists in this project')) {
+                  throw error
+                }
               }
             }
